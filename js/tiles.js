@@ -420,13 +420,35 @@ function paintFireboots(g, s) {
 function paintSkates(g, s) {
   paintBootBase(g, s);
   const c = s / 2;
-  g.save(); g.translate(c, c);
-  g.fillStyle = lgr(g, 0, -s * .2, 0, s * .2, [[0, '#f4f8ff'], [1, '#aebadb']]);
-  rr(g, -s * .12, -s * .22, s * .2, s * .3, s / 20); g.fill();
-  rr(g, -s * .12, .02 * s, s * .32, s * .15, s / 18); g.fill();
-  g.strokeStyle = PAL.cyan; g.lineWidth = s / 26; g.lineCap = 'round';
-  glow(g, PAL.cyan, s / 10);
-  g.beginPath(); g.moveTo(-s * .14, s * .23); g.lineTo(s * .22, s * .23); g.stroke();
+  g.save(); g.translate(c, c - s * .04);
+  // boot: ankle shaft + foot
+  g.fillStyle = lgr(g, 0, -s * .24, 0, s * .12, [[0, '#fbfdff'], [1, '#b7c3e0']]);
+  rr(g, -s * .11, -s * .24, s * .19, s * .28, s / 20); g.fill();      // shaft
+  rr(g, -s * .11, -s * .02, s * .3, s * .14, s / 20); g.fill();        // foot
+  // laces
+  g.strokeStyle = 'rgba(120,150,200,.7)'; g.lineWidth = s / 60;
+  for (let i = 0; i < 3; i++) {
+    const y = -s * .18 + i * s * .06;
+    g.beginPath(); g.moveTo(-s * .08, y); g.lineTo(s * .04, y + s * .025); g.stroke();
+  }
+  // blade holder (two posts under the foot)
+  g.fillStyle = '#7e8bad';
+  rr(g, -s * .07, s * .11, s * .03, s * .06, s / 60); g.fill();
+  rr(g, s * .12, s * .11, s * .03, s * .06, s / 60); g.fill();
+  // the blade: long, with an upturned toe pick at the front
+  g.beginPath();
+  g.moveTo(-s * .16, s * .2);                                          // back tip
+  g.lineTo(s * .2, s * .2);                                            // along the top of the blade
+  g.quadraticCurveTo(s * .29, s * .19, s * .28, s * .1);              // upturned toe
+  g.quadraticCurveTo(s * .27, s * .17, s * .2, s * .25);             // toe underside
+  g.lineTo(-s * .14, s * .25);                                        // blade edge
+  g.closePath();
+  g.fillStyle = lgr(g, 0, s * .18, 0, s * .26, [[0, '#eaf7ff'], [1, '#9fc4dd']]);
+  glow(g, PAL.cyan, s / 9);
+  g.fill();
+  // bright sharpened edge along the bottom
+  g.strokeStyle = '#eaffff'; g.lineWidth = s / 40; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(-s * .15, s * .25); g.lineTo(s * .2, s * .25); g.stroke();
   noGlow(g);
   g.restore();
 }
