@@ -152,6 +152,18 @@ class Game {
 
   hasBoot(name) { return !!this.inv.boots[name]; }
 
+  // True if a fake blue wall lies one step in `dir` from the entity (revealable this move).
+  fakeAhead(ent, dir) {
+    const fi = idx(ent.x, ent.y);
+    if (this.edgeBlocked(fi, dir)) return false;
+    const [dx, dy] = DIRS[dir];
+    const nx = ent.x + dx, ny = ent.y + dy;
+    if (!inBounds(nx, ny)) return false;
+    const ni = idx(nx, ny);
+    if (this.edgeBlocked(ni, dirBack(dir))) return false;
+    return this.terrain[ni] === T.FAKEWALL && !this.occ[ni];
+  }
+
   terrainPassable(ent, t, kind = ent.kind) {
     switch (t) {
       case T.WALL: case T.HWALL: case T.HWALL_APPEAR: case T.REALWALL:
@@ -215,18 +227,18 @@ class Game {
     ent.dir = dir;
     const fi = idx(ent.x, ent.y);
 
-    // chip bumping mystery walls reveals them (and blocks the move)
+    // chip bumping mystery walls reveals them
     if (ent.kind === 'chip' && !this.edgeBlocked(fi, dir)) {
       const [dx0, dy0] = DIRS[dir];
       const bx = ent.x + dx0, by = ent.y + dy0;
       if (inBounds(bx, by) && !this.edgeBlocked(idx(bx, by), dirBack(dir))) {
         const bt = this.terrain[idx(bx, by)];
         if (bt === T.FAKEWALL && !this.occ[idx(bx, by)]) {
+          // a fake blue wall vanishes and Chip walks onto it in the same step (MS)
           this.terrain[idx(bx, by)] = T.FLOOR;
           this.emit('reveal', bx, by);
-          return false;
-        }
-        if (bt === T.HWALL_APPEAR && !this.occ[idx(bx, by)]) {
+        } else if (bt === T.HWALL_APPEAR && !this.occ[idx(bx, by)]) {
+          // a hidden wall turns solid when bumped and blocks the move
           this.terrain[idx(bx, by)] = T.WALL;
           this.emit('appear', bx, by);
           return false;
@@ -554,11 +566,12 @@ class Game {
   chipSlideStep() {
     const c = this.chip;
     const d = c.slideDir;
-    // force floors allow perpendicular override
+    // force floors allow perpendicular override — including bumping a fake wall,
+    // which checkMove treats as solid, so probe for one explicitly.
     if (c.sliding === 'force') {
       const want = this.input.pending !== null ? this.input.pending : this.input.held;
       if (want !== null && want !== undefined && want !== dirBack(d) && want !== d) {
-        if (this.checkMove(c, want)) {
+        if (this.checkMove(c, want) || this.fakeAhead(c, want)) {
           this.input.pending = null;
           this.tryMove(c, want, 2);
           this.rest(c, c.sliding ? 1 : 2);

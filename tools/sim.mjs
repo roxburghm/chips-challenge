@@ -112,6 +112,48 @@ const at = (l, x, y, t) => l.top[y*32+x] = t;
   check('C1 force floor carries', g.chip.x === 10, \`pos \${g.chip.x},\${g.chip.y}\`);
 }
 
+/* ---- C2: fake blue wall reveals AND passes in one step ---- */
+{
+  const l = blank();
+  at(l, 5, 5, 0x6d);              // chip facing W (any)
+  at(l, 6, 5, T.FAKEWALL);
+  at(l, 7, 5, T.FLOOR);
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_E;
+  for (let i = 0; i < 2; i++) g.tick();   // walking = 2 ticks/tile, so one move
+  check('C2 fake wall passes in one move', g.chip.x === 6 && g.terrain[5*32+6] === T.FLOOR,
+        \`pos \${g.chip.x} tile \${g.terrain[5*32+6]}\`);
+}
+
+/* ---- C3: real blue wall blocks ---- */
+{
+  const l = blank();
+  at(l, 5, 5, 0x6d);
+  at(l, 6, 5, T.REALWALL);
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_E;
+  for (let i = 0; i < 4; i++) g.tick();
+  check('C3 real blue wall blocks', g.chip.x === 5, \`pos \${g.chip.x}\`);
+}
+
+/* ---- C4: boost off a force floor through a fake wall (Nuts and Bolts case) ---- */
+{
+  const l = blank();
+  // a south force-floor column with a fake wall to its right, walls elsewhere
+  at(l, 5, 4, 0x6e);                       // chip facing S at top
+  for (let y = 5; y <= 9; y++) { at(l, 5, y, T.FORCE_S); at(l, 4, y, T.WALL); at(l, 6, y, T.WALL); }
+  at(l, 6, 7, T.FAKEWALL);                 // the lone fake wall in the right side
+  at(l, 7, 7, T.FLOOR);
+  at(l, 8, 7, T.WALL);                     // stop Chip just past the fake wall
+  const g = new Game(l); g.state = 'playing';
+  g.input.held = DIR_S;                    // enter the force floor
+  g.tick();
+  g.input.held = DIR_E;                    // then hold right to boost through the fake wall
+  for (let i = 0; i < 16; i++) g.tick();
+  check('C4 boost through fake wall off force floor', g.chip.x === 7 && g.chip.y === 7,
+        \`pos \${g.chip.x},\${g.chip.y} fake=\${g.terrain[7*32+6]}\`);
+}
+
 /* ---- D: block push into water -> dirt ---- */
 {
   const l = blank();
