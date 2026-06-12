@@ -394,12 +394,34 @@
     dirt: 'push', reveal: 'toggle', appear: 'bump', monsterDie: 'splash', popup: 'button',
   };
 
+  const KEY_LABEL = { B: 'BLUE KEY', R: 'RED KEY', G: 'GREEN KEY', Y: 'YELLOW KEY' };
+  const KEY_HEX = { B: '#37b6ff', R: '#ff5562', G: '#52ff7d', Y: '#ffd23e' };
+  const BOOT_LABEL = {
+    flippers: ['FLIPPERS', 'swim across water', '#37e0d8'],
+    fireboots: ['FIRE BOOTS', 'cross fire safely', '#ff7a5a'],
+    skates: ['ICE SKATES', 'walk on ice — no sliding', '#bdf6ff'],
+    suction: ['SUCTION BOOTS', 'grip force floors', '#c9a0ff'],
+  };
+  let toastTimer = null;
+  function showToast(title, sub, color) {
+    const el = $('#pickupToast');
+    el.innerHTML = `<span class="pt-title" style="color:${color}">${title}</span>` +
+                   (sub ? `<span class="pt-sub">${sub}</span>` : '');
+    el.classList.remove('hidden');
+    void el.offsetWidth;       // restart the entry animation
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1700);
+  }
+
   function drainEvents() {
     if (!game) return;
     for (const ev of game.events) {
       const s = SFX_FOR[ev.type];
       if (s) sfx.play(s);
       if (ev.x >= 0) renderer.handleEvent(ev);
+      if (ev.type === 'boot') { const [t, sub, c] = BOOT_LABEL[ev.data.boot]; showToast(t, sub, c); }
+      if (ev.type === 'key') showToast(KEY_LABEL[ev.data.color], 'opens matching doors', KEY_HEX[ev.data.color]);
       if (ev.type === 'death') setTimeout(() => game.state === 'dead' && showOverlay('dead'), 650);
       if (ev.type === 'win') {
         const lvl = levels[levelIndex];

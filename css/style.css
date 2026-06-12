@@ -138,6 +138,33 @@ body::before {
   mix-blend-mode: overlay;
 }
 
+#pickupToast {
+  position: absolute;
+  left: 50%; top: 30px;
+  transform: translate(-50%, -12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: rgba(8, 14, 28, .92);
+  border: 1px solid rgba(120, 150, 210, .4);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;
+  transition: opacity .2s ease, transform .2s ease;
+}
+#pickupToast.show { opacity: 1; transform: translate(-50%, 0); }
+#pickupToast .pt-title {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: .08em;
+  text-shadow: 0 0 14px currentColor;
+}
+#pickupToast .pt-sub { font-size: 11px; color: var(--dim); letter-spacing: .04em; }
+
 #hintBar {
   position: absolute;
   left: 26px; right: 26px; bottom: 26px;
