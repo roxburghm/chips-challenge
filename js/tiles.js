@@ -435,20 +435,21 @@ function paintSkates(g, s) {
   g.fillStyle = '#7e8bad';
   rr(g, -s * .07, s * .11, s * .03, s * .06, s / 60); g.fill();
   rr(g, s * .12, s * .11, s * .03, s * .06, s / 60); g.fill();
-  // the blade: long, with an upturned toe pick at the front
+  // the blade: a runner that sweeps up into a clear curled toe at the front
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  g.lineWidth = s * .055;
+  glow(g, PAL.cyan, s / 8);
+  g.strokeStyle = lgr(g, -s * .16, 0, s * .3, 0, [[0, '#9fc4dd'], [.6, '#eaf7ff'], [1, '#cfe6ff']]);
   g.beginPath();
-  g.moveTo(-s * .16, s * .2);                                          // back tip
-  g.lineTo(s * .2, s * .2);                                            // along the top of the blade
-  g.quadraticCurveTo(s * .29, s * .19, s * .28, s * .1);              // upturned toe
-  g.quadraticCurveTo(s * .27, s * .17, s * .2, s * .25);             // toe underside
-  g.lineTo(-s * .14, s * .25);                                        // blade edge
-  g.closePath();
-  g.fillStyle = lgr(g, 0, s * .18, 0, s * .26, [[0, '#eaf7ff'], [1, '#9fc4dd']]);
-  glow(g, PAL.cyan, s / 9);
-  g.fill();
-  // bright sharpened edge along the bottom
-  g.strokeStyle = '#eaffff'; g.lineWidth = s / 40; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(-s * .15, s * .25); g.lineTo(s * .2, s * .25); g.stroke();
+  g.moveTo(-s * .17, s * .22);                       // back heel of the blade
+  g.lineTo(s * .14, s * .22);                        // flat runner along the bottom
+  g.quadraticCurveTo(s * .31, s * .22, s * .30, s * .05);  // front sweeps sharply up
+  g.quadraticCurveTo(s * .295, s * -.02, s * .24, s * .0); // little curl back = toe pick
+  g.stroke();
+  // bright sharpened ice edge along the flat of the runner
+  g.lineWidth = s / 44;
+  g.strokeStyle = '#f2ffff';
+  g.beginPath(); g.moveTo(-s * .16, s * .245); g.lineTo(s * .15, s * .245); g.stroke();
   noGlow(g);
   g.restore();
 }
