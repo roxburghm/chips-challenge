@@ -197,7 +197,7 @@ class Game {
       }
       if (ent.kind === 'chip' && occ.kind !== 'block') return true;       // walk into monster: fatal but legal
       if (occ.kind === 'chip' && ent.kind !== 'chip') return true;        // monster/block onto chip
-      if (ent.kind === 'block' && !occ.template) return true;             // block crushes monsters
+      if (ent.kind === 'block' && occ.kind !== 'block' && !occ.template) return true; // block crushes monsters, never other blocks
       return false;
     }
     return this.terrainPassable(ent, this.terrain[ni]);
@@ -245,7 +245,7 @@ class Game {
         if (!this.tryMove(occ, dir, speedTicks, depth + 1)) return false;
       } else if (occ.kind === 'chip') {
         this.killChip(ent.kind === 'block' ? 'crushed' : 'monster');
-      } else if (ent.kind === 'block') {
+      } else if (ent.kind === 'block' && occ.kind !== 'block') {
         this.killMonster(occ);
       } else if (ent.kind === 'chip') {
         chipWalksIntoMonster = true;

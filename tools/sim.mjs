@@ -156,6 +156,34 @@ const at = (l, x, y, t) => l.top[y*32+x] = t;
   check('I1 teleport relocates + exits east', g.chip.x === 21 && g.chip.y === 20, \`pos \${g.chip.x},\${g.chip.y}\`);
 }
 
+/* ---- J: block-vs-block pushes ---- */
+{
+  const l = blank();
+  at(l, 5, 5, 0x6e);         // chip
+  at(l, 6, 5, T.BLOCK);
+  at(l, 7, 5, T.BLOCK);      // two blocks in a row
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_E;
+  for (let i = 0; i < 4; i++) g.tick();
+  const blocks = g.entities.filter(e => e.kind === 'block' && !e.dead);
+  check('J1 double-block push is blocked', g.chip.x === 5 && blocks.length === 2,
+        \`chip \${g.chip.x} blocks alive \${blocks.length}\`);
+}
+{
+  const l = blank();
+  at(l, 5, 5, 0x6e);
+  at(l, 6, 5, T.BLOCK);
+  at(l, 7, 5, 0x49);         // pink ball facing W
+  l.monsters.push({ x: 7, y: 5 });
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_E;
+  for (let i = 0; i < 4; i++) g.tick();
+  const monsterAlive = g.actors.some(m => !m.dead);
+  const block = g.entities.find(e => e.kind === 'block');
+  check('J2 block still crushes monsters', !monsterAlive && !block.dead && g.chip.x === 6,
+        \`monsterAlive \${monsterAlive} block \${block.x},\${block.y}\`);
+}
+
 /* ---- report ---- */
 let fails = 0;
 for (const r of results) {

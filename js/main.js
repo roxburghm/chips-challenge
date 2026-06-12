@@ -12,6 +12,7 @@
   let progress = null;
   let game = null;
   let renderer = null;
+  let minimap = null;
   let levelIndex = 0;     // 0-based
   let paused = false;
   let acc = 0, lastT = 0;
@@ -107,14 +108,19 @@
   };
   let keyStack = [];
 
+  // Leave the "ready" state. Returns true if this input was consumed by it.
+  function beginLevel() {
+    if (!game || game.state !== 'ready') return false;
+    game.state = 'playing';
+    hideOverlay();
+    sfx.play('start');
+    return true;
+  }
+
   function pressDir(d) {
     keyStack = [d, ...keyStack.filter(k => k !== d)];
     if (!game) return;
-    if (game.state === 'ready') {
-      game.state = 'playing';
-      hideOverlay();
-      sfx.play('start');
-    }
+    if (beginLevel()) return; // the starting press only starts — it never moves Chip
     game.input.pending = d;
     game.input.held = keyStack[0];
   }
@@ -141,6 +147,7 @@
         if (game && game.state === 'dead') restart();
         else if (game && game.state === 'won') nextLevel();
         else if (paused) togglePause();
+        else beginLevel();
         break;
       case 'KeyL': openTitle(); break;
     }
@@ -216,7 +223,7 @@
     if (kind === 'ready') {
       html = `<div class="ov-kicker">LEVEL ${lvl.number}</div>
               <h2>${esc(lvl.title)}</h2>
-              <p class="ov-sub">Press an arrow key to begin</p>`;
+              <p class="ov-sub">Press an arrow key or ENTER to begin — the first press won't move Chip</p>`;
     } else if (kind === 'pause') {
       html = `<h2>PAUSED</h2><p class="ov-sub">P or ESC to resume</p>`;
     } else if (kind === 'dead') {
@@ -379,7 +386,10 @@
       }
     } else acc = 0;
     drainEvents();
-    if (game && !paused) renderer.frame(now);
+    if (game && !paused) {
+      renderer.frame(now);
+      minimap.frame(game, renderer.camX, renderer.camY, VIEW_TILES, now);
+    }
 
     // hint bar
     const hb = $('#hintBar');
@@ -465,6 +475,7 @@
 
   async function boot() {
     renderer = new Renderer($('#board'), 64);
+    minimap = new Minimap($('#minimap'));
     buildInventoryIcons();
     bindLoaderUi();
     if (sfx.muted = prefs.muted) $('#muteBtn').textContent = 'UNMUTE';

@@ -65,7 +65,8 @@ blue fake/real walls, toggle walls + green buttons, tank reversal + blue buttons
 traps + brown buttons, clone machines + red buttons, teleports, bombs, and the
 nine monster types with their classic movement AIs (bug, paramecium, fireball,
 glider, ball, tank, walker, blob, teeth). Timed levels, chip counters, hints,
-passwords, and per-level best times are all in.
+passwords, and per-level best times are all in, plus a live HUD minimap
+showing the full level, entities, and the current camera viewport.
 
 A few deep MS quirks (slip-list ordering, boosting, even-step parity) are
 intentionally simplified.

@@ -17,6 +17,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+.hidden { display: none !important; }
+
 html, body { height: 100%; }
 
 body {
@@ -232,6 +234,16 @@ body::before {
 .counter.time big { color: var(--cyan); text-shadow: 0 0 16px rgba(46, 230, 255, .45); }
 .counter.time big.low { color: var(--red); text-shadow: 0 0 18px rgba(255, 71, 87, .7); animation: blink 1s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .45; } }
+
+#minimap {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 9px;
+  background: #0a0f1f;
+  image-rendering: pixelated;
+  border: 1px solid rgba(86, 120, 190, .25);
+}
 
 .inv-grid {
   display: grid;

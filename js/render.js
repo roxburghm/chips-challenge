@@ -189,3 +189,92 @@ class Renderer {
     g.fillRect(0, 0, this.px, this.px);
   }
 }
+
+/* ------------------------------------------------------------- minimap */
+
+const MINI_COLORS = (() => {
+  const m = {};
+  const set = (codes, hex) => { for (const c of codes) m[c] = hex; };
+  set([T.FLOOR, T.HWALL, T.HWALL_APPEAR, T.TOGGLE_O, T.POPUP, T.TRAP], '#161e33');
+  set([T.WALL, T.FAKEWALL, T.REALWALL, T.PANEL_N, T.PANEL_W, T.PANEL_S, T.PANEL_E, T.PANEL_SE], '#46577f');
+  set([T.WATER], '#1779ad');
+  set([T.FIRE], '#ff6b35');
+  set([T.ICE, T.ICE_SE, T.ICE_SW, T.ICE_NW, T.ICE_NE], '#a8d8f0');
+  set([T.FORCE_N, T.FORCE_W, T.FORCE_S, T.FORCE_E, T.FORCE_RND], '#8a2f96');
+  set([T.EXIT], '#58ff8f');
+  set([T.CHIP], '#ffb02e');
+  set([T.DIRT], '#8a5a33');
+  set([T.GRAVEL], '#6c7890');
+  set([T.SOCKET], '#caa24a');
+  set([T.TELEPORT], '#2ee6ff');
+  set([T.BOMB], '#d83448');
+  set([T.THIEF], '#2a2f45');
+  set([T.HINT], '#1f7d96');
+  set([T.TOGGLE_C], '#3f7d3f');
+  set([T.BTN_GREEN], '#3ddc66');
+  set([T.BTN_RED], '#ff4757');
+  set([T.BTN_BROWN], '#b07840');
+  set([T.BTN_BLUE], '#37b6ff');
+  set([T.CLONER], '#6b5a20');
+  set([T.DOOR_B], '#37b6ff'); set([T.KEY_B], '#37b6ff');
+  set([T.DOOR_R], '#ff5562'); set([T.KEY_R], '#ff5562');
+  set([T.DOOR_G], '#52ff7d'); set([T.KEY_G], '#52ff7d');
+  set([T.DOOR_Y], '#ffd23e'); set([T.KEY_Y], '#ffd23e');
+  set([T.FLIPPERS, T.FIREBOOTS, T.SKATES, T.SUCTION], '#9fd8ff');
+  return m;
+})();
+
+class Minimap {
+  constructor(canvas) {
+    this.cv = canvas;
+    this.scale = 8;
+    canvas.width = canvas.height = 32 * this.scale;
+    this.g = canvas.getContext('2d');
+    this.tiny = document.createElement('canvas');
+    this.tiny.width = this.tiny.height = 32;
+    this.tg = this.tiny.getContext('2d');
+    this.img = this.tg.createImageData(32, 32);
+    this.rgb = {};
+    for (const hex of new Set(Object.values(MINI_COLORS))) {
+      const n = parseInt(hex.slice(1), 16);
+      this.rgb[hex] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+  }
+
+  frame(game, camX, camY, viewTiles, now) {
+    // terrain at 1px/tile, scaled up with hard pixels
+    const data = this.img.data;
+    for (let i = 0; i < 1024; i++) {
+      const hex = MINI_COLORS[game.terrain[i]] || '#161e33';
+      const [r, gg, b] = this.rgb[hex] || [22, 30, 51];
+      const o = i * 4;
+      data[o] = r; data[o + 1] = gg; data[o + 2] = b; data[o + 3] = 255;
+    }
+    this.tg.putImageData(this.img, 0, 0);
+
+    const g = this.g, s = this.scale, px = 32 * s;
+    g.imageSmoothingEnabled = false;
+    g.clearRect(0, 0, px, px);
+    g.drawImage(this.tiny, 0, 0, px, px);
+
+    // entities as dots
+    for (const e of game.entities) {
+      if (e.dead || e === game.chip) continue;
+      g.fillStyle = e.kind === 'block' ? '#97a6c4' : '#ff5562';
+      g.fillRect(e.fx * s + 1.5, e.fy * s + 1.5, s - 3, s - 3);
+    }
+    // chip: bright pulsing dot
+    const c = game.chip;
+    const pulse = .65 + .35 * Math.sin(now / 250);
+    g.fillStyle = '#ffffff';
+    g.shadowColor = '#2ee6ff';
+    g.shadowBlur = 6 * pulse;
+    g.fillRect(c.fx * s + .5, c.fy * s + .5, s - 1, s - 1);
+    g.shadowBlur = 0;
+
+    // current camera viewport
+    g.strokeStyle = 'rgba(46,230,255,.85)';
+    g.lineWidth = 1.5;
+    g.strokeRect((camX - viewTiles / 2) * s, (camY - viewTiles / 2) * s, viewTiles * s, viewTiles * s);
+  }
+}
