@@ -383,7 +383,16 @@ h1.logo .row2 { display: block; font-size: .62em; letter-spacing: .26em; }
 #titleScreen.no-levels #levelGrid { display: none; }
 #titleScreen.no-levels .data-status { color: var(--amber); }
 
-#passForm { display: flex; gap: 10px; align-items: center; margin-top: 18px; animation: pop .6s .3s ease both; }
+#passForm {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  max-width: 100%;
+  animation: pop .6s .3s ease both;
+}
 #passInput {
   width: 120px;
   background: rgba(8, 12, 24, .9);
@@ -399,7 +408,7 @@ h1.logo .row2 { display: block; font-size: .62em; letter-spacing: .26em; }
   outline: none;
 }
 #passInput:focus { border-color: var(--amber); box-shadow: 0 0 16px rgba(255, 176, 46, .25); }
-.pass-msg { font-size: 11px; letter-spacing: .2em; min-width: 200px; text-align: left; }
+.pass-msg { flex-basis: 100%; font-size: 11px; letter-spacing: .2em; text-align: center; min-height: 14px; }
 .pass-msg.ok { color: var(--lime); }
 .pass-msg.bad { color: var(--red); animation: glitch .3s steps(2) 2; }
 
