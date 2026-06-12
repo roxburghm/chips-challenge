@@ -14,24 +14,28 @@ const monsterSpeed = kind => MONSTER_TICKS[kind] || 2;
 let NEXT_ID = 1;
 
 // Edges blocked by thin-wall-like terrain: [N, W, S, E]
+// Ice corners are named by the open curve direction; the two OTHER edges are walls.
+//   ICE_SE: open S,E -> walls N,W      ICE_SW: open S,W -> walls N,E
+//   ICE_NW: open N,W -> walls S,E      ICE_NE: open N,E -> walls S,W
 const EDGE_WALLS = {
   [T.PANEL_N]: [1, 0, 0, 0],
   [T.PANEL_W]: [0, 1, 0, 0],
   [T.PANEL_S]: [0, 0, 1, 0],
   [T.PANEL_E]: [0, 0, 0, 1],
   [T.PANEL_SE]: [0, 0, 1, 1],
-  [T.ICE_SE]: [0, 0, 1, 1],
-  [T.ICE_SW]: [0, 1, 1, 0],
-  [T.ICE_NW]: [1, 1, 0, 0],
-  [T.ICE_NE]: [1, 0, 0, 1],
+  [T.ICE_SE]: [1, 1, 0, 0],
+  [T.ICE_SW]: [1, 0, 0, 1],
+  [T.ICE_NW]: [0, 0, 1, 1],
+  [T.ICE_NE]: [0, 1, 1, 0],
 };
 
-// Ice corner redirects: terrain -> {incomingDir: outgoingDir}
+// Ice corner redirects: terrain -> {incomingDir: outgoingDir}.
+// An object slides in through one open side and leaves through the other.
 const ICE_TURNS = {
-  [T.ICE_SE]: { [DIR_S]: DIR_W, [DIR_E]: DIR_N },
-  [T.ICE_SW]: { [DIR_S]: DIR_E, [DIR_W]: DIR_N },
-  [T.ICE_NW]: { [DIR_N]: DIR_E, [DIR_W]: DIR_S },
-  [T.ICE_NE]: { [DIR_N]: DIR_W, [DIR_E]: DIR_S },
+  [T.ICE_SE]: { [DIR_N]: DIR_E, [DIR_W]: DIR_S },
+  [T.ICE_SW]: { [DIR_N]: DIR_W, [DIR_E]: DIR_S },
+  [T.ICE_NW]: { [DIR_S]: DIR_W, [DIR_E]: DIR_N },
+  [T.ICE_NE]: { [DIR_S]: DIR_E, [DIR_W]: DIR_N },
 };
 
 const FORCE_DIRS = { [T.FORCE_N]: DIR_N, [T.FORCE_W]: DIR_W, [T.FORCE_S]: DIR_S, [T.FORCE_E]: DIR_E };

@@ -69,6 +69,38 @@ const at = (l, x, y, t) => l.top[y*32+x] = t;
   check('B2 ice bounce returns', g.chip.x === 5, \`pos \${g.chip.x},\${g.chip.y}\`);
 }
 
+/* ---- B3: ice corners route a slide around a loop (LESSON 3 shape) ---- */
+{
+  // C-shaped ice loop: enter top going west, exit bottom going east.
+  //   iSE  ICE  ICE  <- chip enters here heading west
+  //   ICE
+  //   ICE
+  //   iNE  ICE  ICE  -> exits here heading east
+  const l = blank();
+  at(l, 8, 5, 0x6d);              // chip facing W
+  at(l, 7, 5, T.ICE); at(l, 6, 5, T.ICE); at(l, 5, 5, T.ICE_SE);
+  at(l, 5, 6, T.ICE); at(l, 5, 7, T.ICE); at(l, 5, 8, T.ICE_NE);
+  at(l, 6, 8, T.ICE); at(l, 7, 8, T.ICE);
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_W;
+  for (let i = 0; i < 16; i++) g.tick();
+  check('B3 ice corners route around the loop', g.chip.x === 8 && g.chip.y === 8,
+        \`pos \${g.chip.x},\${g.chip.y}\`);
+}
+
+/* ---- B4: ICE_SE redirects a westward slide to south, not a bounce ---- */
+{
+  const l = blank();
+  at(l, 8, 5, 0x6d);              // chip facing W
+  at(l, 7, 5, T.ICE); at(l, 6, 5, T.ICE); at(l, 5, 5, T.ICE_SE);
+  at(l, 5, 6, T.ICE); at(l, 5, 7, T.ICE);   // floor below, slide stops at (5,8)
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_W;
+  for (let i = 0; i < 12; i++) g.tick();
+  check('B4 ICE_SE turns west->south', g.chip.x === 5 && g.chip.y === 8,
+        \`pos \${g.chip.x},\${g.chip.y}\`);
+}
+
 /* ---- C: force floor + override ---- */
 {
   const l = blank();

@@ -228,16 +228,17 @@ function paintIce(g, s) {
   g.strokeRect(g.lineWidth / 2, g.lineWidth / 2, s - g.lineWidth, s - g.lineWidth);
 }
 
-function paintIceCorner(g, s, corner) { // corner: 'SE','SW','NW','NE' = which two edges are walls
+function paintIceCorner(g, s, corner) { // corner = open curve direction; walls drawn on the two closed edges
   paintIce(g, s);
   const m = s / 12;
   g.strokeStyle = '#e9f7ff'; g.lineWidth = s / 9; g.lineCap = 'round';
   glow(g, 'rgba(180,230,255,.9)', s / 10);
   g.beginPath();
-  if (corner === 'SE') { g.moveTo(0, s - m); g.lineTo(s - m * 2.2, s - m); g.quadraticCurveTo(s - m, s - m, s - m, s - m * 2.2); g.lineTo(s - m, 0); }
-  if (corner === 'SW') { g.moveTo(s, s - m); g.lineTo(m * 2.2, s - m); g.quadraticCurveTo(m, s - m, m, s - m * 2.2); g.lineTo(m, 0); }
-  if (corner === 'NW') { g.moveTo(s, m); g.lineTo(m * 2.2, m); g.quadraticCurveTo(m, m, m, m * 2.2); g.lineTo(m, s); }
-  if (corner === 'NE') { g.moveTo(0, m); g.lineTo(s - m * 2.2, m); g.quadraticCurveTo(s - m, m, s - m, m * 2.2); g.lineTo(s - m, s); }
+  // open SE -> walls on N,W ; open NW -> walls on S,E ; open SW -> walls on N,E ; open NE -> walls on S,W
+  if (corner === 'NW') { g.moveTo(0, s - m); g.lineTo(s - m * 2.2, s - m); g.quadraticCurveTo(s - m, s - m, s - m, s - m * 2.2); g.lineTo(s - m, 0); }
+  if (corner === 'NE') { g.moveTo(s, s - m); g.lineTo(m * 2.2, s - m); g.quadraticCurveTo(m, s - m, m, s - m * 2.2); g.lineTo(m, 0); }
+  if (corner === 'SE') { g.moveTo(s, m); g.lineTo(m * 2.2, m); g.quadraticCurveTo(m, m, m, m * 2.2); g.lineTo(m, s); }
+  if (corner === 'SW') { g.moveTo(0, m); g.lineTo(s - m * 2.2, m); g.quadraticCurveTo(s - m, m, s - m, m * 2.2); g.lineTo(s - m, s); }
   g.stroke();
   noGlow(g);
 }
