@@ -3,9 +3,13 @@
 
 (function () {
   const $ = sel => document.querySelector(sel);
-  const SAVE_KEY = 'chips-challenge-progress-v1';
+  const DATA_KEY = 'chips-challenge-levelset-v1';   // persisted level file (base64)
+  const PREFS_KEY = 'chips-challenge-prefs-v1';     // global prefs (mute)
 
   let levels = [];
+  let setId = null;       // identifies the loaded level set, scopes progress
+  let setName = '';
+  let progress = null;
   let game = null;
   let renderer = null;
   let levelIndex = 0;     // 0-based
@@ -13,17 +17,86 @@
   let acc = 0, lastT = 0;
   const sfx = new Sfx();
 
-  const progress = loadProgress();
+  const prefs = (() => {
+    try { return Object.assign({ muted: false }, JSON.parse(localStorage.getItem(PREFS_KEY)) || {}); }
+    catch { return { muted: false }; }
+  })();
+  function savePrefs() {
+    prefs.muted = sfx.muted;
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch { }
+  }
 
+  function progressKey() { return 'chips-challenge-progress::' + setId; }
   function loadProgress() {
     try {
-      const p = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
-      return { maxOpen: p.maxOpen || 1, completed: p.completed || {}, last: p.last || 1, muted: !!p.muted };
-    } catch { return { maxOpen: 1, completed: {}, last: 1, muted: false }; }
+      const p = JSON.parse(localStorage.getItem(progressKey())) || {};
+      return { maxOpen: p.maxOpen || 1, completed: p.completed || {}, last: p.last || 1 };
+    } catch { return { maxOpen: 1, completed: {}, last: 1 }; }
   }
   function saveProgress() {
-    progress.muted = sfx.muted;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch { }
+    try { localStorage.setItem(progressKey(), JSON.stringify(progress)); } catch { }
+  }
+
+  /* -------------------------------------------------------- level data */
+
+  function bufToB64(buf) {
+    const u8 = new Uint8Array(buf);
+    let s = '';
+    for (let i = 0; i < u8.length; i += 0x8000) {
+      s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+    }
+    return btoa(s);
+  }
+
+  // Parse + activate a level set. Throws if the buffer is not a CC1 .DAT.
+  function loadLevelSet(buf, name, { persist = true } = {}) {
+    const parsed = parseDat(buf);
+    if (!parsed.length) throw new Error('No levels in file');
+    levels = parsed;
+    setName = name;
+    setId = `${name}|${parsed.length}|${buf.byteLength}`;
+    progress = loadProgress();
+    if (persist) {
+      try { localStorage.setItem(DATA_KEY, JSON.stringify({ name, b64: bufToB64(buf) })); } catch { }
+    }
+    game = null;
+    updateDataPanel();
+    buildLevelGrid();
+    return parsed.length;
+  }
+
+  async function bufFromMaybeZip(buf, name) {
+    const u8 = new Uint8Array(buf);
+    if (u8[0] === 0x50 && u8[1] === 0x4b) {           // 'PK' — it's a zip
+      const got = await extractDatFromZip(buf);
+      return { buf: got.buf, name: got.name };
+    }
+    return { buf, name };
+  }
+
+  async function handleFile(file) {
+    try {
+      const raw = await file.arrayBuffer();
+      const { buf, name } = await bufFromMaybeZip(raw, file.name);
+      const n = loadLevelSet(buf, name);
+      setDataMessage(`Loaded ${name} — ${n} levels. Saved in this browser.`, 'ok');
+    } catch (err) {
+      setDataMessage(err.message, 'bad');
+    }
+  }
+
+  function setDataMessage(text, cls) {
+    const el = $('#dataMsg');
+    el.textContent = text;
+    el.className = 'data-msg ' + (cls || '');
+  }
+
+  function updateDataPanel() {
+    const has = levels.length > 0;
+    $('#titleScreen').classList.toggle('no-levels', !has);
+    $('#dataStatus').textContent = has
+      ? `LEVEL SET: ${setName.toUpperCase()} · ${levels.length} LEVELS`
+      : 'NO LEVEL FILE LOADED';
   }
 
   /* ------------------------------------------------------------- input */
@@ -89,6 +162,7 @@
   /* ------------------------------------------------------------ levels */
 
   function startLevel(i) {
+    if (!levels.length) { openTitle(); return; }
     levelIndex = Math.max(0, Math.min(levels.length - 1, i));
     game = new Game(levels[levelIndex]);
     renderer.attach(game);
@@ -120,7 +194,7 @@
   function toggleMute() {
     sfx.muted = !sfx.muted;
     $('#muteBtn').textContent = sfx.muted ? 'UNMUTE' : 'MUTE';
-    saveProgress();
+    savePrefs();
   }
 
   /* ----------------------------------------------------------- overlays */
@@ -157,7 +231,7 @@
               <p class="ov-stats">${game.level.time ? `Time used ${used}s · ${bonus}s to spare` : `Time used ${used}s`}</p>
               <p class="ov-sub">ENTER for the next level</p>`;
     } else if (kind === 'end') {
-      html = `<div class="ov-kicker win">ALL 149 LEVELS</div>
+      html = `<div class="ov-kicker win">ALL ${levels.length} LEVELS</div>
               <h2>You beat the whole set. Legend.</h2>
               <p class="ov-sub">L opens the level list</p>`;
     }
@@ -319,21 +393,91 @@
 
   /* ---------------------------------------------------------------- boot */
 
-  async function boot() {
-    let buf = null;
-    if (typeof CHIPS_DAT_BASE64 !== 'undefined') {
-      buf = base64ToArrayBuffer(CHIPS_DAT_BASE64);
-    } else {
-      const res = await fetch('original/CHIPS.DAT');
-      buf = await res.arrayBuffer();
+  function bindLoaderUi() {
+    const input = $('#fileInput');
+    $('#dropZone').addEventListener('click', () => input.click());
+    $('#changeSetBtn').addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+      if (input.files[0]) handleFile(input.files[0]);
+      input.value = '';
+    });
+    const ts = $('#titleScreen');
+    ts.addEventListener('dragover', e => { e.preventDefault(); ts.classList.add('dragging'); });
+    ts.addEventListener('dragleave', () => ts.classList.remove('dragging'));
+    ts.addEventListener('drop', e => {
+      e.preventDefault();
+      ts.classList.remove('dragging');
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleFile(f);
+    });
+  }
+
+  // Try level-data sources in order:
+  //   1. ?dat=<url> query param (CORS permitting)
+  //   2. a set previously saved in this browser   (?reset=1 clears it)
+  //   3. data embedded by tools/embed.mjs          (?noembed=1 skips, for testing)
+  //   4. original/CHIPS.DAT next to index.html
+  // If none work, the title screen shows the file-drop panel.
+  async function obtainLevelData() {
+    const q = new URLSearchParams(location.search);
+    if (q.get('reset')) { try { localStorage.removeItem(DATA_KEY); } catch { } }
+
+    const datUrl = q.get('dat');
+    if (datUrl) {
+      try {
+        const res = await fetch(datUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const raw = await res.arrayBuffer();
+        const urlName = (datUrl.split('/').pop() || 'levels.dat').split('?')[0];
+        const { buf, name } = await bufFromMaybeZip(raw, urlName);
+        loadLevelSet(buf, name);
+        setDataMessage(`Loaded ${name} from URL.`, 'ok');
+        return true;
+      } catch (err) {
+        setDataMessage(`Could not load ?dat= URL (${err.message}). The host must allow CORS.`, 'bad');
+      }
     }
-    levels = parseDat(buf);
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(DATA_KEY));
+      if (stored && stored.b64) {
+        loadLevelSet(base64ToArrayBuffer(stored.b64), stored.name || 'levels.dat', { persist: false });
+        return true;
+      }
+    } catch { }
+
+    if (typeof CHIPS_DAT_BASE64 !== 'undefined' && !q.get('noembed')) {
+      loadLevelSet(base64ToArrayBuffer(CHIPS_DAT_BASE64), 'CHIPS.DAT', { persist: false });
+      return true;
+    }
+
+    if (!q.get('noembed')) {
+      try {
+        const res = await fetch('original/CHIPS.DAT');
+        if (res.ok) {
+          loadLevelSet(await res.arrayBuffer(), 'CHIPS.DAT', { persist: false });
+          return true;
+        }
+      } catch { }
+    }
+    return false;
+  }
+
+  async function boot() {
     renderer = new Renderer($('#board'), 64);
     buildInventoryIcons();
-    if (sfx.muted = progress.muted) $('#muteBtn').textContent = 'UNMUTE';
-    $('#lvlCount').textContent = levels.length;
+    bindLoaderUi();
+    if (sfx.muted = prefs.muted) $('#muteBtn').textContent = 'UNMUTE';
+    await obtainLevelData();
+    updateDataPanel();
     openTitle();
-    window.__cc = { startLevel, get game() { return game; }, renderer, levels, progress };
+    window.__cc = {
+      startLevel, loadLevelSet,
+      get game() { return game; },
+      get levels() { return levels; },
+      get progress() { return progress; },
+      renderer,
+    };
     requestAnimationFrame(loop);
   }
 

@@ -12,22 +12,34 @@ The engine plays the classic MS-ruleset levels from a standard `.DAT` level file
 ## Running it
 
 The repo deliberately **does not include level data** (the original levels are
-copyrighted). To play:
+copyrighted). The game finds levels from any of these sources, in order:
 
-1. Obtain a CC1 level file — e.g. the `CHIPS.DAT` from your own copy of the game.
-2. Drop it at `original/CHIPS.DAT`.
-3. Either:
-   - **Embed it** (lets the game run from a double-clicked `index.html`):
-     ```sh
-     node tools/embed.mjs        # writes js/levels-data.js
-     ```
-   - **Or serve the folder** (the game falls back to fetching `original/CHIPS.DAT`):
-     ```sh
-     python3 -m http.server 8741
-     # open http://localhost:8741
-     ```
+1. **`?dat=<url>`** query parameter — fetches a `.DAT`/`.ccl`/`.zip` from any
+   CORS-enabled URL. Handy for community level packs.
+2. **Browser storage** — whatever file you last loaded (see below).
+3. **Embedded data** — `js/levels-data.js`, generated locally by
+   `node tools/embed.mjs` from `original/CHIPS.DAT`. Lets the game run from a
+   double-clicked `index.html`.
+4. **`original/CHIPS.DAT`** fetched from next to `index.html` when the folder
+   is served (`python3 -m http.server 8741`).
 
-Any CC1-format `.DAT` level set works, not just the original one.
+If none are found, the title screen shows a **drop zone**: drop in your own
+`CHIPS.DAT` — or the whole `.zip` you have it in (unzipped in-browser via the
+native `DecompressionStream`). The file is parsed locally, never uploaded
+anywhere, and is saved in that browser's `localStorage`, so on every later
+visit the game starts immediately.
+
+### GitHub Pages
+
+This is exactly how the hosted version works: the public site ships only the
+engine, and each visitor supplies their own level file once. No copyrighted
+data is served. Useful query parameters:
+
+- `?dat=<url>` — load a level set from a URL (host must send CORS headers).
+- `?reset=1` — forget the level file saved in this browser.
+
+Any CC1-format `.DAT` level set works, not just the original one — progress
+and best times are tracked separately per level set.
 
 ## Controls
 
