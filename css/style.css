@@ -19,6 +19,18 @@
 
 .hidden { display: none !important; }
 
+/* a game UI shouldn't be text-selectable (inputs stay editable) */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 html, body { height: 100%; }
 
 body {
@@ -97,6 +109,8 @@ body::before {
   position: relative;
   border-radius: 18px;
   padding: 12px;
+  touch-action: none; /* swipes control Chip, not page scroll/zoom */
+  cursor: pointer;
   background: linear-gradient(160deg, rgba(38, 54, 96, .65), rgba(12, 18, 34, .9));
   border: 1px solid var(--panel-edge);
   box-shadow:
@@ -447,35 +461,6 @@ h1.logo .row2 { display: block; font-size: .62em; letter-spacing: .26em; }
 #levelGrid .lvl.locked:hover { transform: none; border-color: rgba(86, 120, 190, .3); box-shadow: none; }
 
 .legalese { margin-top: 36px; color: #45527a; font-size: 11px; line-height: 1.7; max-width: 60ch; }
-
-/* ————————————————— d-pad (touch) ————————————————— */
-
-#dpad {
-  position: fixed;
-  right: 18px; bottom: 18px;
-  z-index: 40;
-  display: none;
-  grid-template-areas: ". up ." "left . right" ". down .";
-  gap: 6px;
-}
-#dpad button {
-  width: 56px; height: 56px;
-  border-radius: 14px;
-  border: 1px solid var(--panel-edge);
-  background: rgba(16, 24, 44, .85);
-  color: var(--cyan);
-  font-size: 20px;
-  touch-action: none;
-}
-#dpad button:active { background: rgba(46, 230, 255, .25); }
-#dpad [data-dir="up"] { grid-area: up; }
-#dpad [data-dir="left"] { grid-area: left; }
-#dpad [data-dir="right"] { grid-area: right; }
-#dpad [data-dir="down"] { grid-area: down; }
-
-@media (pointer: coarse) {
-  #dpad { display: grid; }
-}
 
 /* ————————————————— responsive ————————————————— */
 

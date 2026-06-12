@@ -159,13 +159,52 @@
     if (d !== undefined) releaseDir(d);
   });
 
-  // touch D-pad
-  for (const btn of document.querySelectorAll('#dpad button')) {
-    const d = { up: DIR_N, down: DIR_S, left: DIR_W, right: DIR_E }[btn.dataset.dir];
-    btn.addEventListener('pointerdown', e => { e.preventDefault(); pressDir(d); });
-    btn.addEventListener('pointerup', () => releaseDir(d));
-    btn.addEventListener('pointercancel', () => releaseDir(d));
-    btn.addEventListener('pointerleave', () => releaseDir(d));
+  // touch & mouse on the board: swipe/drag = move (held while dragging), tap/click = start/advance
+  function tapAction() {
+    if (!game) return;
+    if (game.state === 'ready') beginLevel();
+    else if (game.state === 'dead') restart();
+    else if (game.state === 'won') nextLevel();
+    else if (paused) togglePause();
+  }
+
+  function bindTouch() {
+    const zone = $('#boardCard');
+    const DEAD = 18; // px before a drag counts as a direction
+    let pid = null, ax = 0, ay = 0, swipeDir = null, moved = false;
+
+    zone.addEventListener('pointerdown', e => {
+      pid = e.pointerId;
+      ax = e.clientX; ay = e.clientY;
+      swipeDir = null; moved = false;
+      try { zone.setPointerCapture(pid); } catch { }
+      e.preventDefault();
+    });
+    zone.addEventListener('pointermove', e => {
+      if (e.pointerId !== pid) return;
+      const dx = e.clientX - ax, dy = e.clientY - ay;
+      if (Math.abs(dx) < DEAD && Math.abs(dy) < DEAD) return;
+      const d = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? DIR_E : DIR_W) : (dy > 0 ? DIR_S : DIR_N);
+      moved = true;
+      if (d !== swipeDir) {
+        if (swipeDir !== null) releaseDir(swipeDir);
+        swipeDir = d;
+        pressDir(d);            // held while the drag continues
+        ax = e.clientX; ay = e.clientY; // re-anchor so direction changes feel immediate
+      }
+    });
+    const end = e => {
+      if (e.pointerId !== pid) return;
+      pid = null;
+      if (swipeDir !== null) { releaseDir(swipeDir); swipeDir = null; }
+      else if (!moved) tapAction();
+    };
+    zone.addEventListener('pointerup', end);
+    zone.addEventListener('pointercancel', e => {
+      if (e.pointerId !== pid) return;
+      pid = null;
+      if (swipeDir !== null) { releaseDir(swipeDir); swipeDir = null; }
+    });
   }
 
   /* ------------------------------------------------------------ levels */
@@ -225,20 +264,20 @@
     if (kind === 'ready') {
       html = `<div class="ov-kicker">LEVEL ${lvl.number}</div>
               <h2>${esc(lvl.title)}</h2>
-              <p class="ov-sub">Press any key to start</p>`;
+              <p class="ov-sub">Press any key or tap to start</p>`;
     } else if (kind === 'pause') {
-      html = `<h2>PAUSED</h2><p class="ov-sub">P or ESC to resume</p>`;
+      html = `<h2>PAUSED</h2><p class="ov-sub">P, ESC or tap to resume</p>`;
     } else if (kind === 'dead') {
       html = `<div class="ov-kicker fail">CHIP DOWN</div>
               <h2>${DEATH_LINES[game.deathCause] || 'That went badly.'}</h2>
-              <p class="ov-sub">ENTER to retry &nbsp;·&nbsp; L for level list</p>`;
+              <p class="ov-sub">ENTER or tap to retry &nbsp;·&nbsp; L for level list</p>`;
     } else if (kind === 'won') {
       const used = Math.ceil(game.tickNo / 10);
       const bonus = game.level.time ? game.timeLeft : 0;
       html = `<div class="ov-kicker win">SECTOR CLEARED</div>
               <h2>Level ${lvl.number} complete!</h2>
               <p class="ov-stats">${game.level.time ? `Time used ${used}s · ${bonus}s to spare` : `Time used ${used}s`}</p>
-              <p class="ov-sub">ENTER for the next level</p>`;
+              <p class="ov-sub">ENTER or tap for the next level</p>`;
     } else if (kind === 'end') {
       html = `<div class="ov-kicker win">ALL ${levels.length} LEVELS</div>
               <h2>You beat the whole set. Legend.</h2>
@@ -480,6 +519,7 @@
     minimap = new Minimap($('#minimap'));
     buildInventoryIcons();
     bindLoaderUi();
+    bindTouch();
     if (sfx.muted = prefs.muted) $('#muteBtn').textContent = 'UNMUTE';
     await obtainLevelData();
     updateDataPanel();
