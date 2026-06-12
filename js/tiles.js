@@ -367,15 +367,34 @@ function paintFlippers(g, s) {
   paintBootBase(g, s);
   const c = s / 2;
   g.save(); g.translate(c, c);
+  // two overlapping swim fins: foot pocket at the heel, wide blade flaring out
   for (const side of [-1, 1]) {
-    g.save(); g.translate(side * s * .11, 0); g.rotate(side * .22);
-    g.fillStyle = lgr(g, 0, -s * .2, 0, s * .25, [[0, '#37e0d8'], [1, '#1187a8']]);
-    glow(g, 'rgba(55,224,216,.8)', s / 12);
+    g.save();
+    g.translate(side * s * .12, -s * .04);
+    g.rotate(side * .32);
+    glow(g, 'rgba(55,224,216,.7)', s / 12);
+    // blade — teardrop flaring down and outward
+    g.fillStyle = lgr(g, 0, -s * .2, 0, s * .3, [[0, '#4fefe4'], [.5, '#2bbcd0'], [1, '#0f7a9c']]);
     g.beginPath();
-    g.ellipse(0, s * .02, s * .085, s * .24, 0, 0, 7);
-    g.fill(); noGlow(g);
-    g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = s / 50;
-    g.beginPath(); g.moveTo(0, -s * .16); g.lineTo(0, s * .18); g.stroke();
+    g.moveTo(-s * .06, -s * .14);
+    g.quadraticCurveTo(-s * .19, s * .12, -s * .12, s * .3);
+    g.quadraticCurveTo(0, s * .37, s * .12, s * .3);
+    g.quadraticCurveTo(s * .19, s * .12, s * .06, -s * .14);
+    g.closePath();
+    g.fill();
+    noGlow(g);
+    // blade ribs
+    g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = s / 60;
+    g.beginPath(); g.moveTo(0, -s * .1); g.lineTo(0, s * .28); g.stroke();
+    g.beginPath(); g.moveTo(-s * .06, s * .02); g.lineTo(-s * .08, s * .24); g.stroke();
+    g.beginPath(); g.moveTo(s * .06, s * .02); g.lineTo(s * .08, s * .24); g.stroke();
+    // foot pocket (heel cup) at the top
+    g.fillStyle = lgr(g, 0, -s * .24, 0, -s * .08, [[0, '#0c5f78'], [1, '#0a4a60']]);
+    g.beginPath();
+    g.ellipse(0, -s * .17, s * .085, s * .07, 0, 0, 7);
+    g.fill();
+    g.strokeStyle = 'rgba(180,250,255,.6)'; g.lineWidth = s / 56;
+    g.beginPath(); g.ellipse(0, -s * .17, s * .085, s * .07, 0, 0, 7); g.stroke();
     g.restore();
   }
   g.restore();
