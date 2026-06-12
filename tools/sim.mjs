@@ -173,15 +173,52 @@ const at = (l, x, y, t) => l.top[y*32+x] = t;
   const l = blank();
   at(l, 5, 5, 0x6e);
   at(l, 6, 5, T.BLOCK);
-  at(l, 7, 5, 0x49);         // pink ball facing W
+  at(l, 7, 5, 0x4a);         // pink ball facing S (so it stays put)
   l.monsters.push({ x: 7, y: 5 });
   const g = new Game(l); g.state = 'playing';
   g.input.pending = DIR_E;
-  for (let i = 0; i < 4; i++) g.tick();
+  for (let i = 0; i < 2; i++) g.tick();
   const monsterAlive = g.actors.some(m => !m.dead);
   const block = g.entities.find(e => e.kind === 'block');
-  check('J2 block still crushes monsters', !monsterAlive && !block.dead && g.chip.x === 6,
-        \`monsterAlive \${monsterAlive} block \${block.x},\${block.y}\`);
+  check('J2 monsters are block-acting walls', monsterAlive && block.x === 6 && g.chip.x === 5,
+        \`monsterAlive \${monsterAlive} block \${block.x},\${block.y} chip \${g.chip.x}\`);
+}
+{
+  const l = blank();
+  at(l, 5, 5, 0x6e);
+  at(l, 6, 5, T.BLOCK);
+  at(l, 7, 5, T.CHIP);       // computer chip tile
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_E;
+  for (let i = 0; i < 4; i++) g.tick();
+  check('J3 computer chips are block-acting walls', g.chip.x === 5 && g.terrain[5*32+7] === T.CHIP,
+        \`chip \${g.chip.x} tile \${g.terrain[5*32+7]}\`);
+}
+{
+  const l = blank();
+  at(l, 5, 5, 0x6e);
+  at(l, 6, 5, T.BLOCK);
+  at(l, 7, 5, T.KEY_R);      // keys do NOT block blocks in MS
+  const g = new Game(l); g.state = 'playing';
+  g.input.pending = DIR_E;
+  for (let i = 0; i < 4; i++) g.tick();
+  const block = g.entities.find(e => e.kind === 'block');
+  check('J4 blocks may sit on keys (MS)', g.chip.x === 6 && block.x === 7 && g.terrain[5*32+7] === T.KEY_R,
+        \`chip \${g.chip.x} block \${block.x} tile \${g.terrain[5*32+7]}\`);
+}
+{
+  const l = blank();
+  at(l, 5, 5, 0x6e);
+  at(l, 6, 5, T.BLOCK);      // block on a force floor (bottom layer)...
+  l.bottom[5*32+6] = T.FORCE_E;
+  at(l, 7, 5, T.WALL);       // ...pinned against a wall
+  const g = new Game(l); g.state = 'playing';
+  const block = g.entities.find(e => e.kind === 'block');
+  check('J5a pinned block keeps sliding state', block.sliding === 'force', String(block.sliding));
+  g.input.pending = DIR_E;   // chip rams the pinned block
+  for (let i = 0; i < 2; i++) g.tick();
+  check('J5b ram cancels the slide', block.sliding === null && block.x === 6,
+        \`sliding \${block.sliding} block \${block.x}\`);
 }
 
 /* ---- report ---- */

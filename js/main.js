@@ -150,6 +150,8 @@
         else beginLevel();
         break;
       case 'KeyL': openTitle(); break;
+      default:
+        if (!e.metaKey && !e.ctrlKey && !e.altKey) beginLevel();
     }
   });
   document.addEventListener('keyup', e => {
@@ -223,7 +225,7 @@
     if (kind === 'ready') {
       html = `<div class="ov-kicker">LEVEL ${lvl.number}</div>
               <h2>${esc(lvl.title)}</h2>
-              <p class="ov-sub">Press an arrow key or ENTER to begin — the first press won't move Chip</p>`;
+              <p class="ov-sub">Press any key to start</p>`;
     } else if (kind === 'pause') {
       html = `<h2>PAUSED</h2><p class="ov-sub">P or ESC to resume</p>`;
     } else if (kind === 'dead') {

@@ -84,13 +84,14 @@ class Game {
           animStart: 0, animDur: 0, cool: 0,
           sliding: null, slideDir: 0, dead: false, moving: false,
           swimming: !!e.swimming,
-          template: this.terrain[i] === T.CLONER,
+          // loose clone blocks (no machine underneath) act as walls in MS
+          template: this.terrain[i] === T.CLONER || !!e.cloneBlock,
           active: e.kind !== 'block' && (moverSet.size === 0 || moverSet.has(i)),
         };
         if (ent.kind === 'chip') { ent.active = true; this.chip = ent; }
         this.entities.push(ent);
         this.occ[i] = ent;
-        if (ent.template) this.cloneTemplates.set(i, { kind: ent.kind, dir: ent.dir });
+        if (this.terrain[i] === T.CLONER) this.cloneTemplates.set(i, { kind: ent.kind, dir: ent.dir });
       } else {
         this.terrain[i] = top;
       }
@@ -160,8 +161,10 @@ class Game {
     }
     if (kind === 'block') {
       switch (t) {
-        case T.DIRT: case T.POPUP: case T.SOCKET: case T.THIEF: case T.EXIT:
-          return t === T.EXIT; // exit allowed, rest blocked
+        // MS block-acting walls: thief, dirt, computer chip, locks, socket
+        // (hints, boots and exits block blocks only in Lynx)
+        case T.DIRT: case T.POPUP: case T.SOCKET: case T.THIEF: case T.CHIP:
+          return false;
       }
       if (isDoor(t)) return false;
       return true;
@@ -197,8 +200,7 @@ class Game {
       }
       if (ent.kind === 'chip' && occ.kind !== 'block') return true;       // walk into monster: fatal but legal
       if (occ.kind === 'chip' && ent.kind !== 'chip') return true;        // monster/block onto chip
-      if (ent.kind === 'block' && occ.kind !== 'block' && !occ.template) return true; // block crushes monsters, never other blocks
-      return false;
+      return false; // monsters and blocks are block-acting walls in MS
     }
     return this.terrainPassable(ent, this.terrain[ni]);
   }
@@ -229,7 +231,16 @@ class Game {
     }
 
     if (!this.checkMove(ent, dir)) {
-      if (ent.kind === 'chip') this.emit('bump', ent.x, ent.y);
+      if (ent.kind === 'chip') {
+        // the "ram": pushing a sliding block against a block-acting wall stops its slide
+        const [bx, by] = DIRS[dir];
+        const tx = ent.x + bx, ty = ent.y + by;
+        if (inBounds(tx, ty)) {
+          const occ2 = this.occ[idx(tx, ty)];
+          if (occ2 && occ2.kind === 'block' && !occ2.template) occ2.sliding = null;
+        }
+        this.emit('bump', ent.x, ent.y);
+      }
       return false;
     }
 
@@ -245,8 +256,6 @@ class Game {
         if (!this.tryMove(occ, dir, speedTicks, depth + 1)) return false;
       } else if (occ.kind === 'chip') {
         this.killChip(ent.kind === 'block' ? 'crushed' : 'monster');
-      } else if (ent.kind === 'block' && occ.kind !== 'block') {
-        this.killMonster(occ);
       } else if (ent.kind === 'chip') {
         chipWalksIntoMonster = true;
       }
