@@ -1002,30 +1002,45 @@ const ENTITY_PAINTERS = {
     entShadow(g, s, .56);
     const c = s / 2;
     g.save(); g.translate(c, c); g.rotate([0, -Math.PI / 2, Math.PI, Math.PI / 2][dir]);
+    // dark contrast halo so the tank separates from blue floors/water
+    g.fillStyle = 'rgba(4,8,16,.55)';
+    rr(g, -s * .28, -s * .3, s * .56, s * .6, s / 9); g.fill();
     // treads
-    g.fillStyle = '#1b2236';
-    rr(g, -s * .24, -s * .26, s * .12, s * .52, s / 18); g.fill();
-    rr(g, s * .12, -s * .26, s * .12, s * .52, s / 18); g.fill();
-    g.strokeStyle = '#39435f'; g.lineWidth = s / 44;
+    g.fillStyle = '#11161f';
+    rr(g, -s * .25, -s * .27, s * .13, s * .54, s / 18); g.fill();
+    rr(g, s * .12, -s * .27, s * .13, s * .54, s / 18); g.fill();
+    g.strokeStyle = '#5a6684'; g.lineWidth = s / 44;
     const roll = (ent.moving ? t * 5 : 0) % 1;
     for (let i = 0; i < 5; i++) {
-      const y = -s * .26 + ((i / 5 + roll) % 1) * s * .52;
-      g.beginPath(); g.moveTo(-s * .24, y); g.lineTo(-s * .12, y); g.stroke();
-      g.beginPath(); g.moveTo(s * .12, y); g.lineTo(s * .24, y); g.stroke();
+      const y = -s * .27 + ((i / 5 + roll) % 1) * s * .54;
+      g.beginPath(); g.moveTo(-s * .25, y); g.lineTo(-s * .12, y); g.stroke();
+      g.beginPath(); g.moveTo(s * .12, y); g.lineTo(s * .25, y); g.stroke();
     }
-    // hull
+    // hull — warm steel so it reads against blue, with a bright rim outline
     rr(g, -s * .15, -s * .2, s * .3, s * .4, s / 14);
-    g.fillStyle = lgr(g, -s * .15, 0, s * .15, 0, [[0, '#5a76a8'], [.5, '#3c5380'], [1, '#243352']]);
+    g.fillStyle = lgr(g, -s * .15, -s * .2, s * .15, s * .2, [[0, '#9fb0c8'], [.45, '#67768f'], [1, '#3a4456']]);
     g.fill();
-    // turret + barrel (faces travel = local -y)
-    g.fillStyle = '#2c3c60';
-    g.beginPath(); g.arc(0, s * .02, s * .11, 0, 7); g.fill();
-    g.strokeStyle = '#6c87b8'; g.lineWidth = s / 40;
-    g.beginPath(); g.arc(0, s * .02, s * .11, 0, 7); g.stroke();
-    g.fillStyle = '#6c87b8';
-    rr(g, -s * .025, -s * .34, s * .05, s * .36, s / 40); g.fill();
-    g.fillStyle = PAL.cyan;
-    g.beginPath(); g.arc(0, s * .02, s * .03, 0, 7); g.fill();
+    rr(g, -s * .15, -s * .2, s * .3, s * .4, s / 14);
+    g.strokeStyle = '#dfe9ff'; g.lineWidth = s / 34; g.stroke();
+    // top sheen
+    rr(g, -s * .1, -s * .16, s * .2, s * .1, s / 26);
+    g.fillStyle = 'rgba(240,247,255,.28)'; g.fill();
+    // turret
+    g.fillStyle = '#2a3242';
+    g.beginPath(); g.arc(0, s * .02, s * .115, 0, 7); g.fill();
+    g.strokeStyle = '#c6d4ee'; g.lineWidth = s / 38;
+    g.beginPath(); g.arc(0, s * .02, s * .115, 0, 7); g.stroke();
+    // barrel (faces travel = local -y) with a warm muzzle so direction pops
+    g.fillStyle = '#b9c6dd';
+    rr(g, -s * .028, -s * .36, s * .056, s * .38, s / 40); g.fill();
+    g.strokeStyle = 'rgba(20,28,42,.6)'; g.lineWidth = s / 70;
+    rr(g, -s * .028, -s * .36, s * .056, s * .38, s / 40); g.stroke();
+    g.fillStyle = PAL.amber;
+    glow(g, PAL.amber, s / 14);
+    g.beginPath(); g.arc(0, -s * .35, s * .035, 0, 7); g.fill();
+    noGlow(g);
+    g.fillStyle = '#0b1018';
+    g.beginPath(); g.arc(0, s * .02, s * .045, 0, 7); g.fill();
     g.restore();
   },
 
