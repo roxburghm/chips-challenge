@@ -1,0 +1,6 @@
+# OS noise
+.DS_Store
+
+# Copyrighted game data — bring your own (see README)
+original/
+js/levels-data.js

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Chip's Challenge — Neon Circuit Remake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='3' width='10' height='10' rx='2' fill='%23ffb02e'/%3E%3Crect x='6' y='6' width='4' height='4' fill='%233a2c10'/%3E%3C/svg%3E">
+</head>
+<body>
+<div id="app">
+
+  <header class="masthead">
+    <span class="word">CHIP'S CHALLENGE</span>
+    <span class="spacer"></span>
+    <button class="btn" id="levelsBtn">LEVELS</button>
+    <button class="btn" id="restartBtn">RESTART</button>
+    <button class="btn" id="muteBtn">MUTE</button>
+  </header>
+
+  <main id="gameWrap">
+    <div id="boardCard">
+      <canvas id="board" width="576" height="576"></canvas>
+      <div id="overlay" class="overlay hidden"></div>
+      <div id="hintBar" class="hidden"></div>
+    </div>
+
+    <aside id="hud">
+      <div class="hud-card">
+        <div class="hud-label">LEVEL</div>
+        <div id="hudLevelNo">—</div>
+        <div id="hudTitle">…</div>
+        <div class="passrow">PASSWORD <b id="hudPass">????</b></div>
+      </div>
+
+      <div class="hud-card counters">
+        <div class="counter">
+          <div class="hud-label">CHIPS LEFT</div>
+          <big id="hudChips">0</big>
+        </div>
+        <div class="counter time">
+          <div class="hud-label">TIME</div>
+          <big id="hudTime">—</big>
+        </div>
+      </div>
+
+      <div class="hud-card">
+        <div class="hud-label">INVENTORY</div>
+        <div class="inv-grid">
+          <div class="slot" id="keyB"><span class="count"></span></div>
+          <div class="slot" id="keyR"><span class="count"></span></div>
+          <div class="slot" id="keyG"><span class="count"></span></div>
+          <div class="slot" id="keyY"><span class="count"></span></div>
+          <div class="slot" id="boot-flippers"><span class="count"></span></div>
+          <div class="slot" id="boot-fireboots"><span class="count"></span></div>
+          <div class="slot" id="boot-skates"><span class="count"></span></div>
+          <div class="slot" id="boot-suction"><span class="count"></span></div>
+        </div>
+      </div>
+
+      <div class="hud-card helps">
+        <div class="hud-label">CONTROLS</div>
+        <div><b>←↑↓→</b> / <b>WASD</b> move</div>
+        <div><b>R</b> restart &nbsp; <b>P</b> pause</div>
+        <div><b>L</b> level list &nbsp; <b>M</b> mute</div>
+        <div><b>[</b> <b>]</b> prev / next level</div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- title / level select -->
+  <div id="titleScreen" class="open">
+    <div class="title-inner">
+      <svg class="logo-chip" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g stroke="#caa24a" stroke-width="4" stroke-linecap="round">
+          <path d="M30 14v-8M50 14v-8M70 14v-8M30 86v8M50 86v8M70 86v8"/>
+          <path d="M14 30h-8M14 50h-8M14 70h-8M86 30h8M86 50h8M86 70h8"/>
+        </g>
+        <rect x="14" y="14" width="72" height="72" rx="10" fill="#f0a826"/>
+        <rect x="14" y="14" width="72" height="72" rx="10" fill="url(#sheen)"/>
+        <rect x="30" y="30" width="40" height="40" rx="5" fill="#3a2c10"/>
+        <circle cx="42" cy="42" r="4" fill="#ffe9a8"/>
+        <circle cx="58" cy="42" r="4" fill="#ffe9a8"/>
+        <circle cx="42" cy="58" r="4" fill="#ffe9a8"/>
+        <circle cx="58" cy="58" r="4" fill="#ffe9a8"/>
+        <defs>
+          <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffe2a0" stop-opacity=".9"/>
+            <stop offset=".45" stop-color="#f0a826" stop-opacity="0"/>
+            <stop offset="1" stop-color="#7a4d0e" stop-opacity=".6"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <h1 class="logo">CHIP'S<span class="row2">CHALLENGE</span></h1>
+      <p class="tagline">NEON CIRCUIT REMAKE · ALL <b><span id="lvlCount">149</span> ORIGINAL LEVELS</b> · MODERN GRAPHICS</p>
+
+      <div class="title-actions">
+        <button class="btn primary" id="playBtn">▶ PLAY</button>
+      </div>
+
+      <form id="passForm" autocomplete="off">
+        <input id="passInput" maxlength="4" placeholder="PASS" spellcheck="false">
+        <button class="btn" type="submit">ENTER</button>
+        <span class="pass-msg" id="passMsg"></span>
+      </form>
+
+      <div class="grid-label">SELECT LEVEL</div>
+      <div id="levelGrid"></div>
+
+      <p class="legalese">
+        A fan-made engine with original artwork, for personal use.
+        Level data is read from your own CHIPS.DAT file.
+        Chip's Challenge was created by Chuck Sommerville.
+      </p>
+    </div>
+  </div>
+
+  <!-- touch controls -->
+  <div id="dpad">
+    <button data-dir="up">▲</button>
+    <button data-dir="left">◀</button>
+    <button data-dir="right">▶</button>
+    <button data-dir="down">▼</button>
+  </div>
+</div>
+
+<script src="js/levels-data.js"></script>
+<script src="js/dat.js"></script>
+<script src="js/tiles.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
