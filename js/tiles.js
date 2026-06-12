@@ -442,9 +442,8 @@ function paintSkates(g, s) {
   g.strokeStyle = lgr(g, -s * .16, 0, s * .3, 0, [[0, '#9fc4dd'], [.6, '#eaf7ff'], [1, '#cfe6ff']]);
   g.beginPath();
   g.moveTo(-s * .17, s * .22);                       // back heel of the blade
-  g.lineTo(s * .14, s * .22);                        // flat runner along the bottom
-  g.quadraticCurveTo(s * .31, s * .22, s * .30, s * .05);  // front sweeps sharply up
-  g.quadraticCurveTo(s * .295, s * -.02, s * .24, s * .0); // little curl back = toe pick
+  g.lineTo(s * .16, s * .22);                        // flat runner along the bottom
+  g.quadraticCurveTo(s * .29, s * .22, s * .28, s * .08);  // front sweeps up into the toe
   g.stroke();
   // bright sharpened ice edge along the flat of the runner
   g.lineWidth = s / 44;
